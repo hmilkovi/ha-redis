@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+  redis-master:
+    image: 'bitnami/redis:5.0-debian-9'
+    ports:
+      - '6379'
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_EXTRA_FLAGS=--maxmemory 200mb
+    volumes:
+      - 'redis-master-volume:/bitnami'
+
+  redis-sentinel:
+    image: 'bitnami/redis:5.0-debian-9'
+    ports:
+      - '16379:16379'
+    depends_on:
+      - redis-master
+    volumes:
+      - 'redis-sentinel-volume:/bitnami'
+    entrypoint: |
+      bash -c 'bash -s <<EOF
+      "/bin/bash" -c "cat <<EOF > /opt/bitnami/redis/etc/sentinel.conf
+      port 16379
+      dir /tmp
+      sentinel monitor master-node redis-master 6379 1
+      sentinel down-after-milliseconds master-node 5000
+      sentinel parallel-syncs master-node 1
+      sentinel failover-timeout master-node 5000
+      EOF"
+      "/bin/bash" -c "redis-sentinel /opt/bitnami/redis/etc/sentinel.conf"    
+      EOF'
+
+  redis-slave:
+    image: 'bitnami/redis:5.0-debian-9'
+    ports:
+      - '6379'
+    depends_on:
+      - redis-master
+    volumes:
+      - 'redis-slave-volume:/bitnami'
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-master
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_EXTRA_FLAGS=--maxmemory 200mb
+    
+  haproxy:
+    image: 'haproxy:2.1.0-alpine'
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - '8080:8080'
+      - '6379:6379'
+    depends_on:
+      - redis-master
+      - redis-slave
+         
+volumes:
+  redis-master-volume:
+  redis-slave-volume:
+  redis-sentinel-volume:
