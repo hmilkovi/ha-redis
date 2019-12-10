@@ -20,6 +20,10 @@ class RedisCli:
         redis_host = os.environ.get('REDIS_HOST', 'localhost')
         self.logger.info('connecting to redis %s:6379' % redis_host)
         self.redis_client = redis.Redis(host=redis_host, port=6379, db=0)
+        redis_info = self.redis_client.info()
+        self.logger.info("Redis info: %s - %s | Slave: %s" % (redis_info['role'], redis_info['redis_mode'], str(redis_info.get('slave0', {}))))
+        total_keys = self.redis_client.dbsize()
+        self.logger.info('total current redis keys %d' % total_keys)
 
     def set_keys(self):
         self.logger.info('setting key/val to redis')
@@ -34,10 +38,8 @@ class RedisCli:
             self.logger.info("%s:%s" % (key, val))
 
     def delete_all_keys(self):
-        keys = self.redis_client.keys('*')
         self.logger.info("deleting all redis keys")
-        for key in keys:
-            self.redis_client.delete(key)
+        self.redis_client.flushdb()
 
 
 if __name__ == '__main__':
