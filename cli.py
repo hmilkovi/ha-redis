@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import logging
 
 import fire
@@ -7,7 +8,7 @@ import redis
 
 
 class RedisCli:
-    def __init__(self):
+    def __init__(self, redis_host=os.environ.get('REDIS_HOST', 'localhost')):
         print(r"""
 ________              ________                
 \______ \   _______  _\_____  \ ______  ______
@@ -26,36 +27,49 @@ ________              ________
         handler.setFormatter(formatter)
 
         self.logger.addHandler(handler)
-
-        redis_host = os.environ.get('REDIS_HOST', 'localhost')
+        self.redis_host = redis_host
         self.logger.info('connecting.. to redis %s:6379' % redis_host)
 
+    def get_client(self):
         try:
-            self.redis_client = redis.Redis(host=redis_host, port=6379, db=0)
+            redis_client = redis.Redis(host=self.redis_host, port=6379, db=0)
 
-            redis_info = self.redis_client.info()
+            redis_info = redis_client.info()
             self.logger.info("Redis info: %s - %s | Slave: %s" % (redis_info['role'], redis_info['redis_mode'], str(redis_info.get('slave0', {}))))
 
-            total_keys = self.redis_client.dbsize()
+            total_keys = redis_client.dbsize()
             self.logger.info('total current redis keys %d' % total_keys)
+            return redis_client
         except redis.exceptions.ConnectionError:
-            self.logger.error('failed to connect to redis %s:6379' % redis_host)
+            self.logger.error('failed to connect to redis %s:6379' % self.redis_host)
+            return None
 
     def set_keys(self):
         self.logger.info('setting key/val to redis')
+        redis_client = self.get_client()
         for x in range(10):
-            self.redis_client.set('devops %d' % x, 'devops %d' % x)
+            redis_client.set('devops %d' % x, 'devops %d' % x)
+        return True
 
     def get_all_keys(self):
-        keys = self.redis_client.keys('*')
+        redis_client = self.get_client()
+        keys = redis_client.keys('*')
         self.logger.info("getting all redis key/values")
         for key in keys:
-            val = self.redis_client.get(key)
+            val = redis_client.get(key)
             self.logger.info("%s:%s" % (key, val))
+        return keys
 
     def delete_all_keys(self):
+        redis_client = self.get_client()
         self.logger.info("deleting all redis keys")
-        self.redis_client.flushdb()
+        redis_client.flushdb()
+        return True
+    
+    def watch_keys(self):
+        while True:
+            time.sleep(1)
+            self.get_all_keys()
 
 
 if __name__ == '__main__':
