@@ -58,6 +58,12 @@ services:
     depends_on:
       - redis-master
       - redis-slave
+  
+  redis-script-python:
+    image: hrvoje6/redis-script-python:latest
+    depends_on:
+      - haproxy
+    entrypoint: python /app/cli.py watch_keys
          
 volumes:
   redis-master-volume:
