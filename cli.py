@@ -8,6 +8,15 @@ import redis
 
 class RedisCli:
     def __init__(self):
+        print(r"""
+________              ________                
+\______ \   _______  _\_____  \ ______  ______
+ |    |  \_/ __ \  \/ //   |   \\____ \/  ___/
+ |    `   \  ___/\   //    |    \  |_> >___ \ 
+/_______  /\___  >\_/ \_______  /   __/____  >
+        \/     \/             \/|__|       \/ 
+                        """)
+
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
@@ -15,15 +24,22 @@ class RedisCli:
         handler.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
+
         self.logger.addHandler(handler)
 
         redis_host = os.environ.get('REDIS_HOST', 'localhost')
-        self.logger.info('connecting to redis %s:6379' % redis_host)
-        self.redis_client = redis.Redis(host=redis_host, port=6379, db=0)
-        redis_info = self.redis_client.info()
-        self.logger.info("Redis info: %s - %s | Slave: %s" % (redis_info['role'], redis_info['redis_mode'], str(redis_info.get('slave0', {}))))
-        total_keys = self.redis_client.dbsize()
-        self.logger.info('total current redis keys %d' % total_keys)
+        self.logger.info('connecting.. to redis %s:6379' % redis_host)
+
+        try:
+            self.redis_client = redis.Redis(host=redis_host, port=6379, db=0)
+
+            redis_info = self.redis_client.info()
+            self.logger.info("Redis info: %s - %s | Slave: %s" % (redis_info['role'], redis_info['redis_mode'], str(redis_info.get('slave0', {}))))
+
+            total_keys = self.redis_client.dbsize()
+            self.logger.info('total current redis keys %d' % total_keys)
+        except redis.exceptions.ConnectionError:
+            self.logger.error('failed to connect to redis %s:6379' % redis_host)
 
     def set_keys(self):
         self.logger.info('setting key/val to redis')
