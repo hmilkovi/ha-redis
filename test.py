@@ -1,9 +1,9 @@
 import unittest
 import redis
 import os
+import time
 
 from cli import RedisCli
-
 
 class IntegrationTestRedis(unittest.TestCase):
 
@@ -30,4 +30,5 @@ class IntegrationTestRedis(unittest.TestCase):
         self.assertEqual(cli.get_client(), None)
 
 if __name__ == '__main__':
+    time.sleep(4)
     unittest.main()
