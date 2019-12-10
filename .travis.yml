@@ -19,7 +19,7 @@ before_install:
 
 install:
   - pip install -r requirements.txt
-  - cd ./docker-compose && docker-compose up -d
+  - cd ./docker-compose && docker-compose up -d && cd ..
 
 script:
 - docker ps -a
