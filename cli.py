@@ -29,17 +29,15 @@ ________              ________
         self.logger.addHandler(handler)
         self.redis_host = redis_host
         self.logger.info('connecting.. to redis %s:6379' % redis_host)
+        self.redis_node_role = None
 
     def get_client(self):
         try:
             redis_client = redis.Redis(host=self.redis_host, port=6379, db=0)
 
-            redis_info = redis_client.info()
-            if 'sentinel_masters' in redis_info:
-                self.logger.info("Mater count: %s" % redis_info['sentinel_masters'])
-
             total_keys = redis_client.dbsize()
             self.logger.info('total current redis keys %d' % total_keys)
+
             return redis_client
         except redis.exceptions.ConnectionError:
             self.logger.error('failed to connect to redis %s:6379' % self.redis_host)

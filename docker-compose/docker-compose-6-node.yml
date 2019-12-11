@@ -1,0 +1,117 @@
+version: '3'
+
+networks:
+  redis-cluster:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/16
+
+services:
+  redis-0:
+    image: 'redis:5.0.7-alpine'
+    ports:
+      - '7000:7000'
+    volumes:
+      - 'redis-vol-0:/bitnami'
+      - ./cluster-config-0.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.2
+
+  redis-1:
+    image: 'redis:5.0.7-alpine'
+    ports:
+      - '7001:7001'
+    depends_on:
+      - redis-0
+    volumes:
+      - 'redis-vol-1:/bitnami'
+      - ./cluster-config-1.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.3
+
+  redis-2:
+    image: 'redis:5.0.7-alpine'
+    ports:
+      - '7002:7002'
+    depends_on:
+      - redis-1
+    volumes:
+      - 'redis-vol-2/bitnami'
+      - ./cluster-config-2.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.4
+
+  redis-3:
+    image: 'redis:5.0.7-alpine'
+    ports:
+      - '7003:7003'
+    depends_on:
+      - redis-2
+    volumes:
+      - 'redis-vol-3:/bitnami'
+      - ./cluster-config-3.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.5
+
+  redis-4:
+    image: 'redis:5.0.7-alpine'
+    ports:
+      - '7004:7004'
+    depends_on:
+      - redis-3
+    volumes:
+      - 'redis-vol-4:/bitnami'
+      - ./cluster-config-4.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.6
+
+  redis-5:
+    image: 'redis:5.0.7-alpine'
+    ports:
+      - '7005:7005'
+    depends_on:
+      - redis-4
+    volumes:
+      - 'redis-vol-5:/bitnami'
+      - ./cluster-config-5.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.7
+
+  haproxy:
+    image: 'haproxy:2.1.0-alpine'
+    volumes:
+      - ./haproxy_6_nodes.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - '8080:8080'
+      - '6379:6379'
+    depends_on:
+      - redis-0
+      - redis-1
+      - redis-2
+      - redis-3
+      - redis-4
+      - redis-5
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.8
+
+volumes:
+  redis-vol-0:
+  redis-vol-1:
+  redis-vol-2:
+  redis-vol-3:
+  redis-vol-4:
+  redis-vol-5:
