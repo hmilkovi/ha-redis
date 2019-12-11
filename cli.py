@@ -5,6 +5,7 @@ import logging
 
 import fire
 import redis
+import rediscluster
 
 
 class RedisCli:
@@ -31,7 +32,23 @@ ________              ________
         self.logger.info('connecting.. to redis %s:6379' % redis_host)
         self.redis_node_role = None
 
-    def get_client(self):
+    def get_cluster_client(self):
+        startup_nodes = []
+        try:
+            for entry in self.redis_host.split(','):
+                port = entry.split(':')[1]
+                addr = entry.split(':')[0]
+                startup_nodes.append({"host": addr, "port": port})
+            self.logger.info('connecting.. to redis %s' % str(startup_nodes))
+            redis_client = rediscluster.RedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+            return redis_client
+        except Exception as e:
+            self.logger.error(e)
+            self.logger.error('failed to connect to redis %s:6379' % self.redis_host)
+            time.sleep(1)
+            return self.get_cluster_client()
+
+    def get_client_sentinel(self):
         try:
             redis_client = redis.Redis(host=self.redis_host, port=6379, db=0)
 
@@ -39,16 +56,31 @@ ________              ________
             self.logger.info('total current redis keys %d' % total_keys)
 
             return redis_client
-        except redis.exceptions.ConnectionError:
+        except redis.exceptions.ConnectionError as e:
+            self.logger.error(e)
             self.logger.error('failed to connect to redis %s:6379' % self.redis_host)
-            return None
+            time.sleep(1)
+            return self.get_client()
+
+    def get_client(self):
+        if 'CLUSTER' in os.environ.get('REDIS_HA', 'SENTINEL'):
+            return self.get_cluster_client()
+        else:
+            return self.get_client_sentinel()
 
     def set_keys(self):
         self.logger.info('setting key/val to redis')
         redis_client = self.get_client()
-        for x in range(10):
-            redis_client.set('devops %d' % x, 'devops %d' % x)
-        return True
+        try:
+            for x in range(10):
+                redis_client.set('devops %d' % x, 'devops %d' % x)
+            return True
+        except Exception as e:
+            self.logger.error(e)
+            if 'CLUSTER' in os.environ.get('REDIS_HA', 'SENTINEL'):
+                time.sleep(1)
+                return self.set_keys()
+        return False
 
     def get_all_keys(self):
         redis_client = self.get_client()

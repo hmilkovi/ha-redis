@@ -125,8 +125,8 @@ services:
     depends_on:
       - haproxy
     environment:
-      - REDIS_HOST=redis://haproxy:6379
-    entrypoint: python /app/cli.py watch_keys
+      - REDIS_HOST=redis://haproxy
+    entrypoint: python /app/cli.py set_keys && python /app/cli.py watch_keys
          
 volumes:
   redis-master-volume:

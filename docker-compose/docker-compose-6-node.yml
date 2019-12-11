@@ -108,6 +108,38 @@ services:
       redis-cluster:
         ipv4_address: 10.0.0.8
 
+  redis-script-python:
+    image: hrvoje6/redis-script-python:latest
+    depends_on:
+      - redis-0
+      - redis-1
+      - redis-2
+      - redis-3
+      - redis-4
+      - redis-5
+      - haproxy
+    environment:
+      - REDIS_HA=CLUSTER
+      - REDIS_HOST=10.0.0.2:7000,10.0.0.3:7001,10.0.0.4:7002
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        python /app/cli.py set_keys
+        python /app/cli.py watch_keys
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.9
+
+  redis-exporter:
+    image: bitnami/redis-exporter:1
+    ports:
+      - '9122:9121'
+    depends_on:
+      - haproxy
+    environment:
+      - REDIS_ADDR=redis://10.0.0.8:6379
+
 volumes:
   redis-vol-0:
   redis-vol-1:

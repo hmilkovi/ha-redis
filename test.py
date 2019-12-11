@@ -24,10 +24,6 @@ class IntegrationTestRedis(unittest.TestCase):
         cli = RedisCli()
         self.assertTrue(cli.delete_all_keys())
         self.assertEqual(len(cli.get_all_keys()), 0)
-    
-    def test_fail_connect(self):
-        cli = RedisCli(redis_host="devops.devops")
-        self.assertEqual(cli.get_client(), None)
 
 if __name__ == '__main__':
     time.sleep(4)
