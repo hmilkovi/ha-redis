@@ -35,7 +35,8 @@ ________              ________
             redis_client = redis.Redis(host=self.redis_host, port=6379, db=0)
 
             redis_info = redis_client.info()
-            self.logger.info("Redis info: %s - %s | Slave: %s" % (redis_info['role'], redis_info['redis_mode'], str(redis_info.get('slave0', {}))))
+            if 'sentinel_masters' in redis_info:
+                self.logger.info("Mater count: %s" % redis_info['sentinel_masters'])
 
             total_keys = redis_client.dbsize()
             self.logger.info('total current redis keys %d' % total_keys)
