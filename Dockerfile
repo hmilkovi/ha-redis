@@ -1,5 +1,5 @@
 FROM python:3.8.0-alpine3.10
-
+ENV LOG_LEVEL info
 RUN mkdir /app
 COPY requirements.txt /app/
 

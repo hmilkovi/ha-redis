@@ -12,10 +12,10 @@ services:
     volumes:
       - 'redis-master-volume:/bitnami'
 
-  redis-sentinel:
+  redis-sentinel-0:
     image: 'bitnami/redis:5.0-debian-9'
     ports:
-      - '16379:16379'
+      - '16379'
     depends_on:
       - redis-master
     volumes:
@@ -25,7 +25,49 @@ services:
       "/bin/bash" -c "cat <<EOF > /opt/bitnami/redis/etc/sentinel.conf
       port 16379
       dir /tmp
-      sentinel monitor master-node redis-master 6379 1
+      sentinel monitor master-node redis-master 6379 2
+      sentinel down-after-milliseconds master-node 5000
+      sentinel parallel-syncs master-node 1
+      sentinel failover-timeout master-node 5000
+      EOF"
+      "/bin/bash" -c "redis-sentinel /opt/bitnami/redis/etc/sentinel.conf"    
+      EOF'
+
+  redis-sentinel-1:
+    image: 'bitnami/redis:5.0-debian-9'
+    ports:
+      - '16379'
+    depends_on:
+      - redis-master
+    volumes:
+      - 'redis-sentinel-volume:/bitnami'
+    entrypoint: |
+      bash -c 'bash -s <<EOF
+      "/bin/bash" -c "cat <<EOF > /opt/bitnami/redis/etc/sentinel.conf
+      port 16379
+      dir /tmp
+      sentinel monitor master-node redis-master 6379 2
+      sentinel down-after-milliseconds master-node 5000
+      sentinel parallel-syncs master-node 1
+      sentinel failover-timeout master-node 5000
+      EOF"
+      "/bin/bash" -c "redis-sentinel /opt/bitnami/redis/etc/sentinel.conf"    
+      EOF'
+
+  redis-sentinel-2:
+    image: 'bitnami/redis:5.0-debian-9'
+    ports:
+      - '16379'
+    depends_on:
+      - redis-master
+    volumes:
+      - 'redis-sentinel-volume:/bitnami'
+    entrypoint: |
+      bash -c 'bash -s <<EOF
+      "/bin/bash" -c "cat <<EOF > /opt/bitnami/redis/etc/sentinel.conf
+      port 16379
+      dir /tmp
+      sentinel monitor master-node redis-master 6379 2
       sentinel down-after-milliseconds master-node 5000
       sentinel parallel-syncs master-node 1
       sentinel failover-timeout master-node 5000
@@ -48,6 +90,24 @@ services:
       - REDIS_MASTER_PORT_NUMBER=6379
       - REDIS_EXTRA_FLAGS=--maxmemory 200mb
     
+  redis-exporter-slave:
+    image: bitnami/redis-exporter:1
+    ports:
+      - '9121:9121'
+    depends_on:
+      - redis-slave
+    environment:
+      - REDIS_ADDR=redis://redis-slave:6379
+
+  redis-exporter-master:
+    image: bitnami/redis-exporter:1
+    ports:
+      - '9122:9121'
+    depends_on:
+      - redis-master
+    environment:
+      - REDIS_ADDR=redis://redis-master:6379
+
   haproxy:
     image: 'haproxy:2.1.0-alpine'
     volumes:
@@ -56,13 +116,16 @@ services:
       - '8080:8080'
       - '6379:6379'
     depends_on:
-      - redis-master
-      - redis-slave
+      - redis-sentinel-0
+      - redis-sentinel-1
+      - redis-sentinel-2
   
   redis-script-python:
     image: hrvoje6/redis-script-python:latest
     depends_on:
       - haproxy
+    environment:
+      - REDIS_HOST=redis://haproxy:6379
     entrypoint: python /app/cli.py watch_keys
          
 volumes:

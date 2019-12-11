@@ -69,7 +69,10 @@ ________              ________
     def watch_keys(self):
         while True:
             time.sleep(1)
-            self.get_all_keys()
+            try:
+                self.get_all_keys()
+            except AttributeError:
+                self.logger.error('redis is current down or not ready %s:6379' % self.redis_host)
 
 
 if __name__ == '__main__':
