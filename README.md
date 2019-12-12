@@ -108,6 +108,12 @@ It's implemented inside docker-compose ymls.
 3. 127.0.0.1:9090 - Prometheus
 ```
 
+` Notice: ` Grafana has default auth:
+```
+Username: admin
+Password: admin
+```
+
 ### Other stuff
 Docker images:
 ```
