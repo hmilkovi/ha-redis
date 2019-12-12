@@ -8,6 +8,14 @@ Requirements:
 2. docker-compose >= v1.24.1
 3. Python 3.8
 
+Make sure following ports are not in use:
+- 7000-7005
+- 8080
+- 3000
+- 9090
+- 9121
+- 6379
+
 ### There are two solutions for HA Redis
 
 1. Master->Slave + Sentinel
