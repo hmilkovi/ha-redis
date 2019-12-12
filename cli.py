@@ -31,6 +31,8 @@ ________              ________
         self.redis_host = redis_host
         self.logger.info('connecting.. to redis %s:6379' % redis_host)
 
+        self.redis_setup = os.environ.get('REDIS_HA', 'SENTINEL')
+
     def get_cluster_client(self):
         startup_nodes = []
         try:
@@ -62,7 +64,7 @@ ________              ________
             return self.get_client()
 
     def get_client(self):
-        if 'CLUSTER' in os.environ.get('REDIS_HA', 'SENTINEL'):
+        if 'CLUSTER' in self.redis_setup:
             return self.get_cluster_client()
         else:
             return self.get_client_sentinel()
@@ -76,7 +78,7 @@ ________              ________
             return True
         except Exception as e:
             self.logger.error(e)
-            if 'CLUSTER' in os.environ.get('REDIS_HA', 'SENTINEL'):
+            if 'CLUSTER' in self.redis_setup:
                 time.sleep(1)
                 return self.set_keys()
         return False
@@ -91,7 +93,8 @@ ________              ________
                 self.logger.info("%s:%s" % (key, val))
             return keys
         except Exception as e:
-            raise fire.core.FireError(e)
+           self.logger.error(e)
+           return []
 
     def delete_all_keys(self):
         try:
@@ -99,7 +102,8 @@ ________              ________
             self.logger.info("deleting all redis keys")
             redis_client.flushdb()
         except Exception as e:
-            raise fire.core.FireError(e)
+           self.logger.error(e)
+           return False
         return True
     
     def watch_keys(self):

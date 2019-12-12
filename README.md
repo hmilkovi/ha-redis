@@ -67,9 +67,25 @@ docker-compose:
 
 ### Python simple Redis cli tool
 
-Before running it please lift up one of redis setups
+Before running it please lift up solution with sentinel.
 
+Python ENV variables:
 ```
+REDIS_HA - indicates which solution should script connect to cluster or master-slave solution
+Examples:
+REDIS_HA=CLUSTER
+REDIS_HA=SENTINEL - default value if not provided
+
+REDIS_HOST - redis host or redis hosts
+REDIS_HOST=localhost - default value if not provided
+
+For Redis with Sentinel:
+REDIS_HOST=haproxy
+
+For Redis 6 node cluster:
+REDIS_HOST=10.0.0.2:7000,10.0.0.3:7001,10.0.0.4:7002
+```
+
 Usage: cli.py - <command>
 available commands:
     delete_all_keys - deletes all key/val inside redis
