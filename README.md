@@ -18,7 +18,7 @@ Make sure following ports are not in use:
 
 ### There are two solutions for HA Redis
 
-1. Master->Slave + Sentinel
+#### 1. Master->Slave + Sentinel
 This approach is fine as long as we can take possibility of some data loss due to asyc replication master->slave
 
 How it works:
@@ -27,7 +27,7 @@ How it works:
 - If Slave gets promoted HAproxy check makes sure Redis client traffic goes always to node with master role
 
 
-2. 6 node Redis Cluster
+#### 2. 6 node Redis Cluster
 There are 3 master nodes and 3 slave nodes.
 
 How it works:
@@ -102,9 +102,11 @@ It's implemented inside docker-compose ymls.
 
 
 ### Docker Compose service access local
+```
 1. 127.0.0.1:8080 - HAproxy
 2. 127.0.0.1:3000 - Grafana
 3. 127.0.0.1:9090 - Prometheus
+```
 
 ### Other stuff
 Docker images:
