@@ -30,7 +30,6 @@ ________              ________
         self.logger.addHandler(handler)
         self.redis_host = redis_host
         self.logger.info('connecting.. to redis %s:6379' % redis_host)
-        self.redis_node_role = None
 
     def get_cluster_client(self):
         startup_nodes = []

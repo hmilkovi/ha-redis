@@ -4,7 +4,7 @@ help:          ## Show this help.
 up-sentinel:   ## Lift up docker-compose redis master-slave with sentinel
 	docker-compose up -d
 
-down-sentinel: ## Down up docker-compose redis master-slave with sentinel
+down-sentinel: ## Down docker-compose redis master-slave with sentinel
 	docker-compose up -d
 	docker volume prune --force
 
@@ -16,6 +16,6 @@ up-cluster:    ## Lift up docker-compose redis 6 node cluster
 		--cluster create 10.0.0.2:7000 10.0.0.3:7001 10.0.0.4:7002 10.0.0.5:7003 10.0.0.6:7004 10.0.0.7:7005 \
 		--cluster-replicas 1
 
-down-cluster:  ## Down up docker-compose redis 6 node cluster
+down-cluster:  ## Down docker-compose redis 6 node cluster
 	docker-compose -f docker-compose-6-node.yml down
 	docker volume prune --force
