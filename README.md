@@ -13,8 +13,20 @@ Requirements:
 1. Master->Slave + Sentinel
 This approach is fine as long as we can take possibility of some data loss due to asyc replication master->slave
 
+How it works:
+- If master fails sentinel prometes slave to master
+- If Slave fails that has no impact
+- If Slave gets promoted HAproxy check makes sure Redis client traffic goes always to node with master role
+
+
 2. 6 node Redis Cluster
-There are 3 master nodes and 3 slave nodes
+There are 3 master nodes and 3 slave nodes.
+
+How it works:
+- If any master node fails his slave becomes new master
+- If slave fails there is no impact on clusters work
+- If one master and his slave fail the traffic will go to other nodes
+- Client is responsible to implement Redis cluster logic but for initial access there is HAproxy that always points traffic to one of masters
 
 ### Usage docker-compose via Makefile
 
