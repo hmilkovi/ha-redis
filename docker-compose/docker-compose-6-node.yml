@@ -135,7 +135,7 @@ services:
     image: bitnami/redis-exporter:1
     ports:
       - '9122:9121'
-   depends_on:
+    depends_on:
       - redis-0
       - redis-1
       - redis-2
@@ -180,3 +180,5 @@ volumes:
   redis-vol-3:
   redis-vol-4:
   redis-vol-5:
+  prometheus-data-volume:
+  grafana-data-volume:
