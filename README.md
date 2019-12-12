@@ -85,7 +85,7 @@ REDIS_HOST=haproxy
 For Redis 6 node cluster:
 REDIS_HOST=10.0.0.2:7000,10.0.0.3:7001,10.0.0.4:7002
 ```
-
+```
 Usage: cli.py - <command>
 available commands:
     delete_all_keys - deletes all key/val inside redis
