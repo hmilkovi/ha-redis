@@ -1,5 +1,9 @@
 version: '3'
 
+networks:
+  redis-sentinel:
+    driver: bridge
+
 services:
   redis-master:
     image: 'bitnami/redis:5.0-debian-9'
@@ -11,6 +15,8 @@ services:
       - REDIS_EXTRA_FLAGS=--maxmemory 200mb
     volumes:
       - 'redis-master-volume:/bitnami'
+    networks:
+      redis-sentinel:
 
   redis-sentinel-0:
     image: 'bitnami/redis:5.0-debian-9'
@@ -32,6 +38,8 @@ services:
       EOF"
       "/bin/bash" -c "redis-sentinel /opt/bitnami/redis/etc/sentinel.conf"    
       EOF'
+    networks:
+      redis-sentinel:
 
   redis-sentinel-1:
     image: 'bitnami/redis:5.0-debian-9'
@@ -53,6 +61,8 @@ services:
       EOF"
       "/bin/bash" -c "redis-sentinel /opt/bitnami/redis/etc/sentinel.conf"    
       EOF'
+    networks:
+      redis-sentinel:
 
   redis-sentinel-2:
     image: 'bitnami/redis:5.0-debian-9'
@@ -74,6 +84,8 @@ services:
       EOF"
       "/bin/bash" -c "redis-sentinel /opt/bitnami/redis/etc/sentinel.conf"    
       EOF'
+    networks:
+      redis-sentinel:
 
   redis-slave:
     image: 'bitnami/redis:5.0-debian-9'
@@ -89,24 +101,18 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_MASTER_PORT_NUMBER=6379
       - REDIS_EXTRA_FLAGS=--maxmemory 200mb
-    
-  redis-exporter-slave:
+    networks:
+      redis-sentinel:
+
+  redis-exporter:
     image: bitnami/redis-exporter:1
     ports:
       - '9121:9121'
     depends_on:
-      - redis-slave
-    environment:
-      - REDIS_ADDR=redis://redis-slave:6379
-
-  redis-exporter-master:
-    image: bitnami/redis-exporter:1
-    ports:
-      - '9122:9121'
-    depends_on:
       - redis-master
-    environment:
-      - REDIS_ADDR=redis://redis-master:6379
+      - redis-slave
+    networks:
+      redis-sentinel:
 
   haproxy:
     image: 'haproxy:2.1.0-alpine'
@@ -119,16 +125,54 @@ services:
       - redis-sentinel-0
       - redis-sentinel-1
       - redis-sentinel-2
-  
+    networks:
+      redis-sentinel:
+
   redis-script-python:
     image: hrvoje6/redis-script-python:latest
     depends_on:
+      - redis-master
+      - redis-slave
       - haproxy
     environment:
-      - REDIS_HOST=redis://haproxy
-    entrypoint: python /app/cli.py set_keys && python /app/cli.py watch_keys
-         
+      - REDIS_HOST=haproxy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        python /app/cli.py set_keys
+        python /app/cli.py watch_keys
+    networks:
+      redis-sentinel:
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - '9090:9090'
+    depends_on:
+      - redis-exporter
+    volumes:
+      - ./prom-sentinel.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data-volume:/prometheus
+    networks:
+      redis-sentinel:
+
+  grafana:
+    image: grafana/grafana
+    user: "104"
+    ports:
+      - '3000:3000'
+    depends_on:
+      - prometheus
+    volumes:
+      - ./provisioning-grafana/:/etc/grafana/provisioning/
+      - 'grafana-data-volume:/var/lib/grafana'
+    networks:
+      redis-sentinel:
+
 volumes:
   redis-master-volume:
   redis-slave-volume:
   redis-sentinel-volume:
+  grafana-data-volume:
+  prometheus-data-volume:

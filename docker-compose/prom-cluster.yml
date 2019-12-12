@@ -1,0 +1,28 @@
+global:
+  scrape_interval:     6s
+  evaluation_interval: 6s
+
+
+scrape_configs:
+  - job_name: 'redis_exporter_targets'
+    static_configs:
+      - targets:
+        - redis://redis-0:7000
+        - redis://redis-1:7001
+        - redis://redis-2:7002
+        - redis://redis-3:7003
+        - redis://redis-4:7004
+        - redis://redis-5:7005
+    metrics_path: /scrape
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: redis-exporter:9121
+  
+  - job_name: 'redis_exporter'
+    static_configs:
+      - targets:
+        - redis-exporter:9121

@@ -83,18 +83,24 @@ ________              ________
         return False
 
     def get_all_keys(self):
-        redis_client = self.get_client()
-        keys = redis_client.keys('*')
-        self.logger.info("getting all redis key/values")
-        for key in keys:
-            val = redis_client.get(key)
-            self.logger.info("%s:%s" % (key, val))
-        return keys
+        try:
+            redis_client = self.get_client()
+            keys = redis_client.keys('*')
+            self.logger.info("getting all redis key/values")
+            for key in keys:
+                val = redis_client.get(key)
+                self.logger.info("%s:%s" % (key, val))
+            return keys
+        except Exception as e:
+            raise fire.core.FireError(e)
 
     def delete_all_keys(self):
-        redis_client = self.get_client()
-        self.logger.info("deleting all redis keys")
-        redis_client.flushdb()
+        try:
+            redis_client = self.get_client()
+            self.logger.info("deleting all redis keys")
+            redis_client.flushdb()
+        except Exception as e:
+            raise fire.core.FireError(e)
         return True
     
     def watch_keys(self):

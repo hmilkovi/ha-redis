@@ -135,10 +135,43 @@ services:
     image: bitnami/redis-exporter:1
     ports:
       - '9122:9121'
+   depends_on:
+      - redis-0
+      - redis-1
+      - redis-2
+      - redis-3
+      - redis-4
+      - redis-5
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.10
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - '9090:9090'
     depends_on:
-      - haproxy
-    environment:
-      - REDIS_ADDR=redis://10.0.0.8:6379
+      - redis-exporter
+    volumes:
+      - ./prom-cluster.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data-volume:/prometheus
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.11
+
+  grafana:
+    image: grafana/grafana
+    user: "104"
+    ports:
+      - '3000:3000'
+    depends_on:
+      - prometheus
+    volumes:
+      - ./provisioning-grafana/:/etc/grafana/provisioning/
+      - 'grafana-data-volume:/var/lib/grafana'
+    networks:
+      redis-cluster:
+        ipv4_address: 10.0.0.12
 
 volumes:
   redis-vol-0:
