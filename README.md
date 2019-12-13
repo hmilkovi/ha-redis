@@ -22,7 +22,7 @@ Make sure following ports are not in use:
 This approach is fine as long as we can take possibility of some data loss due to asyc replication master->slave
 
 How it works:
-- If master fails sentinel prometes slave to master
+- If master fails sentinel promotes slave to master
 - If Slave fails that has no impact
 - If Slave gets promoted HAproxy check makes sure Redis client traffic goes always to node with master role
 
